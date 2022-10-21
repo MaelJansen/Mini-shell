@@ -58,8 +58,14 @@ do_help( struct Shell *this, const struct StringVector *args )
 }
 
 static void
+do_ls ( struct Shell *this, const struct StringVector *args ){
+    
+}
+
+static void
 do_system( struct Shell *this, const struct StringVector *args )
 {
+    do_ls(this, args);
     (void)this;
     (void)args;
 }
@@ -80,8 +86,6 @@ do_cd( struct Shell *this, const struct StringVector *args )
         printf( "directory '%s' not valid\n", tmp );
     (void)this;
 }
-
-// A voir si d'autre commandes internes existent
 
 static void
 do_rappel( struct Shell *this, const struct StringVector *args )
@@ -118,6 +122,8 @@ do_pwd( struct Shell *this, const struct StringVector *args)
     }
     (void)this;
 }
+
+// A voir si d'autre commandes internes existent
 
 typedef void ( *Action )( struct Shell *, const struct StringVector * );
 
