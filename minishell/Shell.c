@@ -52,7 +52,7 @@ shell_read_line( struct Shell *this )
 static void
 do_help( struct Shell *this, const struct StringVector *args )
 {
-    printf( "-> commands: exit, cd, help, ?.\n" );
+    printf( "-> commands: exit, cd, help, ?, pwd.\n" );
     (void)this;
     (void)args;
 }
@@ -81,6 +81,8 @@ do_cd( struct Shell *this, const struct StringVector *args )
     (void)this;
 }
 
+// A voir si d'autre commandes internes existent
+
 static void
 do_rappel( struct Shell *this, const struct StringVector *args )
 {
@@ -103,12 +105,27 @@ do_exit( struct Shell *this, const struct StringVector *args )
     (void)args;
 }
 
+static void
+do_pwd( struct Shell *this, const struct StringVector *args)
+{
+    int   nb_tokens = string_vector_size( args );
+    char tmp[1024];
+    if ( 1 == nb_tokens ) {
+        getcwd(tmp, 1024);
+        printf("Le chemin est : %s\n",tmp);
+    } else {
+        printf("Entrer une commande valide");
+    }
+    (void)this;
+}
+
 typedef void ( *Action )( struct Shell *, const struct StringVector * );
 
 static struct {
     const char *name;
     Action      action;
 } actions[] = { { .name = "exit", .action = do_exit },     { .name = "cd", .action = do_cd },
+                {.name = "pwd", .action = do_pwd},
                 { .name = "rappel", .action = do_rappel }, { .name = "help", .action = do_help },
                 { .name = "?", .action = do_help },        { .name = "!", .action = do_system },
                 { .name = NULL, .action = do_execute } };
