@@ -52,7 +52,7 @@ shell_read_line( struct Shell *this )
 static void
 do_help( struct Shell *this, const struct StringVector *args )
 {
-    printf( "-> commands: exit, cd, help, ?, pwd, ! ls.\n" );
+    printf( "-> commands: exit, cd, help, ?, pwd.\n" );
     (void)this;
     (void)args;
 }
@@ -65,13 +65,20 @@ void cut_String_cmd(const struct StringVector *args, char *command){
 }
 
 static void
+do_ls(struct Shell *this, const struct StringVector *args){
+    execl("/bin/ls", args->strings[2]);
+    (void)this;
+}
+
+static void
 do_system( struct Shell *this, const struct StringVector *args )
 {
-    char command[1000] = "";
+    do_ls(this, args);
+    /*char command[1000] = "";
     cut_String_cmd(args, command);
     system(command);
     (void)this;
-    (void)args;
+    (void)args;*/
 }
 
 static void
