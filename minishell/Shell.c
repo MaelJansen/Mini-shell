@@ -57,28 +57,21 @@ do_help( struct Shell *this, const struct StringVector *args )
     (void)args;
 }
 
-void cut_String_cmd(const struct StringVector *args, char *command){
-    for (size_t i=1; i< args->size; i++){
-        char * temp = strcat(string_vector_get(args, i)," ");
-        strcat(command,temp);
-    }
-}
-
-static void
-do_ls(struct Shell *this, const struct StringVector *args){
-    execl("/bin/ls", args->strings[2]);
-    (void)this;
-}
-
 static void
 do_system( struct Shell *this, const struct StringVector *args )
 {
-    do_ls(this, args);
-    /*char command[1000] = "";
-    cut_String_cmd(args, command);
-    system(command);
+    char *tmp = malloc(256*sizeof(char));
+    for (size_t i=0; i<args->size-1; i++){
+        strcat(tmp, args->strings[i]);
+    }
+    printf("test1 : %s", tmp);
+    strjoinarray(tmp, args, 1, args->size-1, " ");
+    printf("test : %s", tmp);
+    split_line(tmp);
+    printf("%s", tmp);
+    execv("/bin/ls", &tmp);
+    free(tmp);
     (void)this;
-    (void)args;*/
 }
 
 static void
@@ -129,7 +122,7 @@ do_pwd( struct Shell *this, const struct StringVector *args)
         getcwd(tmp, 1024);
         printf("Le chemin est : %s\n",tmp);
     } else {
-        printf("Entrer une commande valide");
+        printf("Entrer une commande valide\n");
     }
     (void)this;
 }
@@ -174,3 +167,5 @@ shell_execute_line( struct Shell *this )
 
     string_vector_free( &tokens );
 }
+
+// Si on a & a la fin de la commande ne fait pas de wait()
