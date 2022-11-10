@@ -10,8 +10,15 @@
 #include "StringVector.h"
 
 // Il n'y aura que 10 tâches executables en arrières plan
-static pid_t jobsTab[10];
+
 int increment = 0;
+int n = 0;
+struct Job{
+    pid_t pid;
+    int num;
+};
+struct Job jobsTab[10];
+pid_t pid;
 
 void
 shell_init( struct Shell *this )
@@ -75,23 +82,32 @@ externalCMD(struct Shell *this, const struct StringVector *args) {
     char *tmp = malloc(256*sizeof(char));
     char *path = malloc(256*sizeof(char));
     int j = 0;
-        strjoinarray(tmp, args, 1, args->size, " ");
-        char *tmp2[args->size];
-        for (size_t i=1; i<args->size; i++){
-            if (strcmp(args->strings[i],"&") != 0){
-                tmp2[j] = args->strings[i];
-                j++;
-            }
+    strjoinarray(tmp, args, 1, args->size, " ");
+    char *tmp2[args->size];
+    for (size_t i=1; i<args->size; i++){
+        if (strcmp(args->strings[i],"&") != 0){
+            tmp2[j] = args->strings[i];
+            j++;
         }
-        tmp2[j] = '\0';
-        strcat(path, "/bin/");
-        strcat(path, args->strings[1]);
-        execv(path, tmp2);
+    }
+    tmp2[j] = '\0';
+    strcat(path, "/bin/");
+    strcat(path, args->strings[1]);
+    execv(path, tmp2);
 
     free(path);
     free(tmp);
     (void)this;
 }
+
+
+/*void fin_job(){
+    for(int i=0; i<increment; i++){
+        if (jobsTab[i].pid == pid){
+            jobsTab[i].pid = 0;
+        }
+    }
+}*/
 
 /*
 * Fonction : do_system
@@ -105,22 +121,29 @@ externalCMD(struct Shell *this, const struct StringVector *args) {
 static void
 do_system( struct Shell *this, const struct StringVector *args )
 {
-    pid_t p = fork();
     int s;
-    // Il faut trouver un moyen pour supprimer les processus qui sont terminés
-    jobsTab[increment] = p;
+    pid_t p = fork();
+    struct Job actualjob =
+    {
+        p,n
+    };
+    n = n+1;
+
+    jobsTab[increment] = actualjob;
     increment += 1;
-        if (p == -1){
-            printf("error");
-            exit(EXIT_FAILURE);
-        } else if (p == 0) {
-            externalCMD(this, args);
-            exit(EXIT_SUCCESS);
-        }
+    if (p == -1){
+        printf("error");
+        exit(EXIT_FAILURE);
+    } else if (p == 0) {
+        externalCMD(this, args);
+        exit(EXIT_SUCCESS);
+    }
     if (strcmp(args->strings[args->size - 1],"&") != 0) {  
-        waitpid(p, &s, 0);
+        pid = waitpid(p, &s, 0);    
+        //signal(SIGCHLD, fin_job);
     }
 }
+
 
 /*
 * Fonction : do_cd
@@ -205,7 +228,7 @@ static void
 do_jobs()
 {
     for (int i=0; i<increment; i++){
-        printf("Id du processus %d : %d \n",i+1,jobsTab[i]);
+        printf("Id du processus %d : %d \n",i+1,jobsTab[i].pid);
     }
 }
 
