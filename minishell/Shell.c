@@ -4,6 +4,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
+#include <sys/wait.h>
 
 #include "Shell.h"
 #include "StringVector.h"
@@ -52,26 +53,46 @@ shell_read_line( struct Shell *this )
 static void
 do_help( struct Shell *this, const struct StringVector *args )
 {
-    printf( "-> commands: exit, cd, help, ?, pwd.\n" );
+    printf( "-> commands: exit, cd, help, ?, pwd, external commands : ! commands -options.\n" );
     (void)this;
     (void)args;
 }
 
 static void
+externalCMD(struct Shell *this, const struct StringVector *args) {
+    char *tmp = malloc(256*sizeof(char));
+    char *path = malloc(256*sizeof(char));
+    char *options = malloc(256*sizeof(char));
+
+
+        strjoinarray(tmp, args, 1, args->size, " ");
+        strjoinarray(options, args, 1, args->size, " ");
+        char *tmp2[] = {options, NULL};
+        strcat(path, "/bin/");
+        strcat(path, args->strings[1]);
+        execv(path, tmp2);
+
+    free(path);
+    free(tmp);
+    free(options);
+    (void)this;
+}
+
+static void
 do_system( struct Shell *this, const struct StringVector *args )
 {
-    char *tmp = malloc(256*sizeof(char));
-    for (size_t i=0; i<args->size-1; i++){
-        strcat(tmp, args->strings[i]);
+    pid_t p = fork();
+    int s;
+        if (p == -1){
+            printf("error");
+            exit(EXIT_FAILURE);
+        } else if (p == 0) {
+            externalCMD(this, args);
+            exit(EXIT_SUCCESS);
+        }
+    if (strcmp(args->strings[args->size - 1],"&") != 0) {
+        waitpid(p, &s, 0);
     }
-    printf("test1 : %s", tmp);
-    strjoinarray(tmp, args, 1, args->size-1, " ");
-    printf("test : %s", tmp);
-    split_line(tmp);
-    printf("%s", tmp);
-    execv("/bin/ls", &tmp);
-    free(tmp);
-    (void)this;
 }
 
 static void
