@@ -9,6 +9,10 @@
 #include "Shell.h"
 #include "StringVector.h"
 
+// Il n'y aura que 10 tâches executables en arrières plan
+static pid_t jobsTab[10];
+int increment = 0;
+
 void
 shell_init( struct Shell *this )
 {
@@ -62,19 +66,26 @@ static void
 externalCMD(struct Shell *this, const struct StringVector *args) {
     char *tmp = malloc(256*sizeof(char));
     char *path = malloc(256*sizeof(char));
-    char *options = malloc(256*sizeof(char));
-
-
+    //char *options = malloc(256*sizeof(char));
+    int j = 0;
         strjoinarray(tmp, args, 1, args->size, " ");
-        strjoinarray(options, args, 1, args->size, " ");
-        char *tmp2[] = {options, NULL};
+        //strjoinarray(options, args, 1, args->size, " ");
+        //printf("test otions split : %s \n", options);
+        //char *tmp2[256] = {options, NULL};
+        char *tmp2[256];
+        for (size_t i=1; i<args->size; i++){
+            tmp2[j] = args->strings[i];
+            j ++;
+        }
+        tmp2[j+1] = NULL;
+        tmp2[j+2] = '\0';
         strcat(path, "/bin/");
         strcat(path, args->strings[1]);
         execv(path, tmp2);
 
     free(path);
     free(tmp);
-    free(options);
+    //free(options);
     (void)this;
 }
 
@@ -83,6 +94,9 @@ do_system( struct Shell *this, const struct StringVector *args )
 {
     pid_t p = fork();
     int s;
+    // Il fuat trouver un moyen pour supprimer les processus qui sont terminés
+    jobsTab[increment] = p;
+    increment += 1;
         if (p == -1){
             printf("error");
             exit(EXIT_FAILURE);
@@ -148,7 +162,13 @@ do_pwd( struct Shell *this, const struct StringVector *args)
     (void)this;
 }
 
-// A voir si d'autre commandes internes existent
+static void
+do_jobs()
+{
+    for (int i=0; i<increment; i++){
+        printf("Id du processus %d : %d \n",i+1,jobsTab[i]);
+    }
+}
 
 typedef void ( *Action )( struct Shell *, const struct StringVector * );
 
@@ -156,7 +176,7 @@ static struct {
     const char *name;
     Action      action;
 } actions[] = { { .name = "exit", .action = do_exit },     { .name = "cd", .action = do_cd },
-                {.name = "pwd", .action = do_pwd},
+                {.name = "pwd", .action = do_pwd},         {.name = "jobs", .action = do_jobs},
                 { .name = "rappel", .action = do_rappel }, { .name = "help", .action = do_help },
                 { .name = "?", .action = do_help },        { .name = "!", .action = do_system },
                 { .name = NULL, .action = do_execute } };
@@ -188,5 +208,3 @@ shell_execute_line( struct Shell *this )
 
     string_vector_free( &tokens );
 }
-
-// Si on a & a la fin de la commande ne fait pas de wait()
